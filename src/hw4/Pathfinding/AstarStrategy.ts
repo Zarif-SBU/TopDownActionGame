@@ -14,13 +14,40 @@ import GraphUtils from "../../Wolfie2D/Utils/GraphUtils";
  * 
  * - Peter
  */
+
+function h(start: number, end: number) {
+    return this.mesh.graph.getNodePosition(start).distanceTo(this.mesh.graph.getNodePosition(end));
+}
+
+
 export default class AstarStrategy extends NavPathStrat {
 
     /**
      * @see NavPathStrat.buildPath()
      */
     public buildPath(to: Vec2, from: Vec2): NavigationPath {
+        const start = this._mesh.graph.snap(from);
+        const target = this.mesh.graph.snap(to);
+        let path = new Stack<Vec2>(this.mesh.graph.numVertices);
+        
+        let gscore = new Map<number, number>();
+        let fscore = new Map<number, number>();
+        
+        gscore.set(start, 0);
+        fscore.set(start, h(start, target));
+
+        let openset = new Set<number>();
+        openset.add(start);
+        while(openset.size > 0) {
+            let curr = openset[0];
+            openset.forEach(node => {
+                if(fscore.get(node) < fscore.get(curr)) {
+                    curr = node;
+                }
+            });
+            this.mesh.graph.edges
+        }
         return new NavigationPath(new Stack());
+
     }
-    
 }
