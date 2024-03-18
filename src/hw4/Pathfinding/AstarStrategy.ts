@@ -15,39 +15,96 @@ import GraphUtils from "../../Wolfie2D/Utils/GraphUtils";
  * - Peter
  */
 
-function h(start: number, end: number) {
-    return this.mesh.graph.getNodePosition(start).distanceTo(this.mesh.graph.getNodePosition(end));
+interface nodeInfo {
+    node: number;
+    gscore: number;
+    hscore: number;
+    parent: number;
+}
+
+function findNode(node: number, set) {
+    for (const node of set) {
+      if (node.node === node) {
+        return node;
+      }
+    }
+    return undefined;
+  }
+
+function h(start: number, end: number, mesh) {
+    // console.log("bleh: ", mesh.graph.getNodePosition(start));
+    return mesh.graph.getNodePosition(start).distanceTo(mesh.graph.getNodePosition(end));
 }
 
 
 export default class AstarStrategy extends NavPathStrat {
-
-    /**
-     * @see NavPathStrat.buildPath()
-     */
     public buildPath(to: Vec2, from: Vec2): NavigationPath {
-        const start = this._mesh.graph.snap(from);
+        const start = this.mesh.graph.snap(from);
         const target = this.mesh.graph.snap(to);
-        let path = new Stack<Vec2>(this.mesh.graph.numVertices);
-        
-        let gscore = new Map<number, number>();
-        let fscore = new Map<number, number>();
-        
-        gscore.set(start, 0);
-        fscore.set(start, h(start, target));
 
+        let parents = new Map<number, number>();
+        let gscore = new Map<number, number>();
+        let hscore = new Map<number, number>();
+        gscore.set(start, 0);
+        hscore.set(start, h(start, target, this.mesh));
+        let closedset = new Set<number>();
         let openset = new Set<number>();
         openset.add(start);
-        while(openset.size > 0) {
-            let curr = openset[0];
-            openset.forEach(node => {
-                if(fscore.get(node) < fscore.get(curr)) {
-                    curr = node;
-                }
+        console.log("start: ", start);
+        console.log("target: ", target);
+        while (openset.size > 0) {
+            let curr = Array.from(openset).reduce((a, b) => {
+                return (gscore.get(a) + hscore.get(a)) < (gscore.get(b) + hscore.get(b)) ? a : b;
             });
-            this.mesh.graph.edges
-        }
-        return new NavigationPath(new Stack());
 
+            // console.log("curr: ", curr);
+            openset.delete(curr);
+            closedset.add(curr);
+            
+            if (curr == target) {
+
+                break;
+            }
+
+            let edges = this.mesh.graph.edges[curr];
+            // console.log("edge: ", edges);
+            while (edges != null && edges !== undefined) {
+                // console.log("edge: ", edges);
+                let neighbor = edges.y;
+                // console.log("neighbor: ", edges);
+                let tentative_gscore = gscore.get(curr) + edges.weight;
+                
+                if (closedset.has(neighbor)) {
+                    edges = edges.next;
+                    continue;
+                }
+                
+                if(openset.has(neighbor)) {
+                    if(tentative_gscore < gscore.get(neighbor)) {
+                        gscore.set(neighbor, tentative_gscore);
+                        parents.set(neighbor, curr);
+                    }
+                } else{
+                    openset.add(neighbor);
+                    gscore.set(neighbor, tentative_gscore);
+                    parents.set(neighbor, curr);
+
+                    hscore.set(neighbor, h(neighbor, target, this.mesh));
+                }
+                // console.log("neighbor: ", this.mesh.graph.getNodePosition(neighbor).distanceTo(this.mesh.graph.getNodePosition(target)));
+                edges = edges.next;
+            }
+        }
+        // Reconstruct path
+        let path = new Stack<Vec2>(this.mesh.graph.numVertices);
+        let current = target;
+        while (parents.has(current)) {
+            path.push(this.mesh.graph.getNodePosition(current));
+            current = parents.get(current);
+            // console.log("curr:", current);
+        }
+        console.log("breh");
+        path.push(from); // Add start node
+        return new NavigationPath(path);
     }
 }
