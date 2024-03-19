@@ -29,80 +29,8 @@ function findNode(node: number, set) {
       }
     }
     return undefined;
-}
+  }
 
-class PriorityQueue<T> {
-    private heap: { priority: number, item: T }[];
-    constructor() {
-        this.heap = [];
-    }
-
-    enqueue(item: T, priority: number): void {
-        this.heap.push({ priority, item });
-        this.bubbleUp(this.heap.length - 1);
-    }
-
-    dequeue(): T | undefined {
-        const minItem = this.heap[0];
-        const end = this.heap.pop();
-        if (this.heap.length > 0 && end !== undefined) {
-            this.heap[0] = end;
-            this.bubbleDown(0);
-        }
-        return minItem ? minItem.item : undefined;
-    }
-
-    isEmpty(): boolean {
-        return this.heap.length === 0;
-    }
-
-    private bubbleUp(index: number): void {
-        let currentIndex = index;
-        const currentItem = this.heap[currentIndex];
-        while (currentIndex > 0) {
-            const parentIndex = Math.floor((currentIndex - 1) / 2);
-            const parentItem = this.heap[parentIndex];
-            if (currentItem.priority < parentItem.priority) {
-                this.heap[currentIndex] = parentItem;
-                currentIndex = parentIndex;
-            } else {
-                break;
-            }
-        }
-        this.heap[currentIndex] = currentItem;
-    }
-
-    private bubbleDown(index: number): void {
-        const length = this.heap.length;
-        const currentItem = this.heap[index];
-        while (true) {
-            let leftChildIndex = 2 * index + 1;
-            let rightChildIndex = 2 * index + 2;
-            let swapIndex = null;
-
-            if (leftChildIndex < length) {
-                const leftChild = this.heap[leftChildIndex];
-                if (leftChild.priority < currentItem.priority) {
-                    swapIndex = leftChildIndex;
-                }
-            }
-            if (rightChildIndex < length) {
-                const rightChild = this.heap[rightChildIndex];
-                if ((swapIndex === null && rightChild.priority < currentItem.priority) ||
-                    (swapIndex !== null && rightChild.priority < this.heap[swapIndex].priority)) {
-                    swapIndex = rightChildIndex;
-                }
-            }
-
-            if (swapIndex === null) {
-                break;
-            }
-            this.heap[index] = this.heap[swapIndex];
-            index = swapIndex;
-        }
-        this.heap[index] = currentItem;
-    }
-}
 function h(start: number, end: number, mesh) {
     // console.log("bleh: ", mesh.graph.getNodePosition(start));
     return mesh.graph.getNodePosition(start).distanceTo(mesh.graph.getNodePosition(end));
