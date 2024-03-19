@@ -44,54 +44,31 @@ export default class AstarStrategy extends NavPathStrat {
 
         let parents = new Map<number, number>();
         let gscore = new Map<number, number>();
-        let hscore = new Map<number, number>();
         gscore.set(start, 0);
-        hscore.set(start, h(start, target, this.mesh));
-        let closedset = new Set<number>();
         let openset = new Set<number>();
         openset.add(start);
-        console.log("start: ", start);
-        console.log("target: ", target);
         while (openset.size > 0) {
             let curr = Array.from(openset).reduce((a, b) => {
-                return (gscore.get(a) + hscore.get(a)) < (gscore.get(b) + hscore.get(b)) ? a : b;
+                return (gscore.get(a) + h(a, target, this.mesh)) < (gscore.get(b) + h(b, target, this.mesh)) ? a : b;
             });
 
             // console.log("curr: ", curr);
             openset.delete(curr);
-            closedset.add(curr);
-            
-            if (curr == target) {
-
-                break;
+            if (curr === target) {
+                break; // Exit early if target node reached
             }
 
             let edges = this.mesh.graph.edges[curr];
-            // console.log("edge: ", edges);
             while (edges != null && edges !== undefined) {
-                // console.log("edge: ", edges);
-                let neighbor = edges.y;
-                // console.log("neighbor: ", edges);
-                let tentative_gscore = gscore.get(curr) + edges.weight;
+                const neighbor = edges.y;
+                const tentative_gscore = gscore.get(curr) + edges.weight;
                 
-                if (closedset.has(neighbor)) {
-                    edges = edges.next;
-                    continue;
-                }
-                
-                if(openset.has(neighbor)) {
-                    if(tentative_gscore < gscore.get(neighbor)) {
-                        gscore.set(neighbor, tentative_gscore);
-                        parents.set(neighbor, curr);
-                    }
-                } else{
-                    openset.add(neighbor);
+                if (!gscore.has(neighbor) || tentative_gscore < gscore.get(neighbor)) {
+                    // Update g-score and parent if necessary
                     gscore.set(neighbor, tentative_gscore);
                     parents.set(neighbor, curr);
-
-                    hscore.set(neighbor, h(neighbor, target, this.mesh));
+                    openset.add(neighbor);
                 }
-                // console.log("neighbor: ", this.mesh.graph.getNodePosition(neighbor).distanceTo(this.mesh.graph.getNodePosition(target)));
                 edges = edges.next;
             }
         }
@@ -103,7 +80,6 @@ export default class AstarStrategy extends NavPathStrat {
             current = parents.get(current);
             // console.log("curr:", current);
         }
-        console.log("breh");
         path.push(from); // Add start node
         return new NavigationPath(path);
     }
