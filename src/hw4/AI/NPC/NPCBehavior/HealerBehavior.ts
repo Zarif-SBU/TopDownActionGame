@@ -66,11 +66,11 @@ export default class HealerBehavior extends NPCBehavior  {
         // Action to use a healthpack to heal an ally
         let useHealthpack = new UseHealthpack(this, this.owner);
         useHealthpack.targets = scene.getBattlers();
-        // useHealthpack.targetFinder = new BasicFinder<Battler>(ClosestPositioned(this.owner), BattlerActiveFilter(), BattlerGroupFilter([owner.battleGroup]), BattlerHealthFilter(0, 4), AllyFilter(this.owner));
+        useHealthpack.targetFinder = new BasicFinder<Battler>(ClosestPositioned(this.owner), BattlerActiveFilter(), BattlerHealthFilter(0, this.owner.maxHealth/2), AllyFilter(this.owner), BattlerActiveFilter());
         useHealthpack.addPrecondition(HealerStatuses.HAS_HPACK);
         useHealthpack.addPrecondition(HealerStatuses.ALLY_EXISTS);
         useHealthpack.addEffect(HealerStatuses.GOAL);
-        useHealthpack.cost = 10;
+        useHealthpack.cost = 1;
         this.addState(HealerActions.USE_HPACK, useHealthpack);
         /* ######### Set the healers goal ######## */
 

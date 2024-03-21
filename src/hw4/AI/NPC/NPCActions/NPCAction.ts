@@ -61,8 +61,7 @@ export default abstract class NPCAction extends GoapAction {
                 this.performAction(this.target);
                 this.finished();
             } else {
-                const speedMultiplier = 5;
-                this.actor.moveOnPath(this.actor.speed * deltaT * speedMultiplier, this.path);
+                this.actor.moveOnPath(this.actor.speed * deltaT * 5, this.path);
             }
         } else {
             this.finished();

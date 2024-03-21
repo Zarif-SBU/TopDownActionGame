@@ -15,27 +15,41 @@ import GraphUtils from "../../Wolfie2D/Utils/GraphUtils";
  * - Peter
  */
 
-interface nodeInfo {
-    node: number;
-    gscore: number;
-    hscore: number;
-    parent: number;
-}
 
-function findNode(node: number, set) {
-    for (const node of set) {
-      if (node.node === node) {
-        return node;
-      }
-    }
-    return undefined;
-  }
-
-function h(start: number, end: number, mesh) {
+function h(start, end, mesh) {
     // console.log("bleh: ", mesh.graph.getNodePosition(start));
     return mesh.graph.getNodePosition(start).distanceTo(mesh.graph.getNodePosition(end));
 }
+class PriorityQueue {
+    private queue: {fscore, node}[];
 
+    constructor() {
+        this.queue = [];
+    }
+
+    enqueue(node, fscore): void {
+        this.queue.push({node, fscore});
+    }
+
+    dequeue() {
+        if (this.isEmpty()) {
+            return undefined;
+        }
+        let min = 0;
+        for (let i = 1; i < this.queue.length; i++) {
+            if (this.queue[i].fscore < this.queue[min].fscore) {
+                min = i;
+            }
+        }
+        const mindNode = this.queue[min].node;
+        this.queue.splice(min, 1);
+        return mindNode;
+    }
+
+    isEmpty() {
+        return this.queue.length === 0;
+    }
+}
 
 export default class AstarStrategy extends NavPathStrat {
     public buildPath(to: Vec2, from: Vec2): NavigationPath {
@@ -44,18 +58,14 @@ export default class AstarStrategy extends NavPathStrat {
 
         let parents = new Map<number, number>();
         let gscore = new Map<number, number>();
+        let openset = new PriorityQueue();
         gscore.set(start, 0);
-        let openset = new Set<number>();
-        openset.add(start);
-        while (openset.size > 0) {
-            let curr = Array.from(openset).reduce((a, b) => {
-                return (gscore.get(a) + h(a, target, this.mesh)) < (gscore.get(b) + h(b, target, this.mesh)) ? a : b;
-            });
+        openset.enqueue(start, 0);
 
-            // console.log("curr: ", curr);
-            openset.delete(curr);
+        while (!openset.isEmpty()) {
+            const curr = openset.dequeue();
             if (curr === target) {
-                break; // Exit early if target node reached
+                break;
             }
 
             let edges = this.mesh.graph.edges[curr];
@@ -64,23 +74,22 @@ export default class AstarStrategy extends NavPathStrat {
                 const tentative_gscore = gscore.get(curr) + edges.weight;
                 
                 if (!gscore.has(neighbor) || tentative_gscore < gscore.get(neighbor)) {
-                    // Update g-score and parent if necessary
                     gscore.set(neighbor, tentative_gscore);
                     parents.set(neighbor, curr);
-                    openset.add(neighbor);
+                    const fScore = tentative_gscore + h(neighbor, target, this.mesh);
+                    openset.enqueue(neighbor, fScore);
                 }
                 edges = edges.next;
             }
         }
-        // Reconstruct path
+
         let path = new Stack<Vec2>(this.mesh.graph.numVertices);
         let current = target;
         while (parents.has(current)) {
             path.push(this.mesh.graph.getNodePosition(current));
             current = parents.get(current);
-            // console.log("curr:", current);
         }
-        path.push(from); // Add start node
+        path.push(from);
         return new NavigationPath(path);
     }
 }
